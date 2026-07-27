@@ -1,15 +1,51 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[codz]
-*$py.class
+# ============================================================
+# BIST-Algo-Trade — Public GitHub .gitignore
+# ============================================================
 
-# C extensions
+# ------------------------------------------------------------
+# Secrets, environment variables and credentials
+# ------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.env.local
+
+.streamlit/secrets.toml
+secrets.toml
+config.local.*
+settings.local.*
+
+credentials*.json
+credential*.json
+service_account*.json
+client_secret*.json
+token*.json
+
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+
+# ------------------------------------------------------------
+# Python virtual environments
+# ------------------------------------------------------------
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# ------------------------------------------------------------
+# Python cache, build and packaging
+# ------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
 *.so
 
-# Distribution / packaging
-.Python
 build/
-develop-eggs/
 dist/
 downloads/
 eggs/
@@ -26,193 +62,179 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# PyInstaller
-#   Usually these files are written by a python script from a template
-#   before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
-
-# Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
+# ------------------------------------------------------------
+# Tests, coverage and static analysis caches
+# ------------------------------------------------------------
+.pytest_cache/
 .coverage
 .coverage.*
-.cache
-nosetests.xml
+htmlcov/
 coverage.xml
 *.cover
-*.py.cover
-.hypothesis/
-.pytest_cache/
-cover/
+*.py,cover
 
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-.pybuilder/
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
-
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-# Pipfile.lock
-
-# UV
-#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-# uv.lock
-
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-# poetry.lock
-# poetry.toml
-
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#   pdm recommends including project-wide configuration in pdm.toml, but excluding .pdm-python.
-#   https://pdm-project.org/en/latest/usage/project/#working-with-version-control
-# pdm.lock
-# pdm.toml
-.pdm-python
-.pdm-build/
-
-# pixi
-#   Similar to Pipfile.lock, it is generally recommended to include pixi.lock in version control.
-# pixi.lock
-#   Pixi creates a virtual environment in the .pixi directory, just like venv module creates one
-#   in the .venv directory. It is recommended not to include this directory in version control.
-.pixi
-
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# Redis
-*.rdb
-*.aof
-*.pid
-
-# RabbitMQ
-mnesia/
-rabbitmq/
-rabbitmq-data/
-
-# ActiveMQ
-activemq-data/
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.envrc
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
 .mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
 .pyre/
-
-# pytype static type analyzer
 .pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# PyCharm
-#   JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#   be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#   and can be added to the global gitignore or merged into this file.  For a more nuclear
-#   option (not recommended) you can uncomment the following to ignore the entire idea folder.
-# .idea/
-
-# Abstra
-#   Abstra is an AI-powered process automation framework.
-#   Ignore directories containing user credentials, local state, and settings.
-#   Learn more at https://abstra.io/docs
-.abstra/
-
-# Visual Studio Code
-#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
-#   that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#   and can be added to the global gitignore or merged into this file. However, if you prefer, 
-#   you could uncomment the following to ignore the entire vscode folder
-# .vscode/
-# Temporary file for partial code execution
-tempCodeRunnerFile.py
-
-# Ruff stuff:
 .ruff_cache/
+.hypothesis/
+.tox/
+.nox/
 
-# PyPI configuration file
-.pypirc
+# ------------------------------------------------------------
+# Jupyter
+# Keep source notebooks, ignore checkpoints and exports
+# ------------------------------------------------------------
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+*.nbconvert.ipynb
 
-# Marimo
-marimo/_static/
-marimo/_lsp/
-__marimo__/
+# ------------------------------------------------------------
+# IDE and editor files
+# ------------------------------------------------------------
+.vscode/
+.idea/
+*.code-workspace
+*.sublime-project
+*.sublime-workspace
 
-# Streamlit
-.streamlit/secrets.toml
+# ------------------------------------------------------------
+# Operating system files
+# ------------------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ------------------------------------------------------------
+# Logs, temporary files and caches
+# ------------------------------------------------------------
+logs/
+*.log
+*.log.*
+tmp/
+temp/
+.cache/
+cache/
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# ------------------------------------------------------------
+# Local databases and user trading records
+# Never publish portfolio, cash or transaction history
+# ------------------------------------------------------------
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+
+# ------------------------------------------------------------
+# Market data
+# Raw, processed and live market files are reproducible,
+# potentially large and may have redistribution restrictions.
+# ------------------------------------------------------------
+data/raw/**
+data/processed/**
+data/live/**
+
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/live/.gitkeep
+!data/raw/bist100_sirketler.xlsx
+
+!data/raw/README.md
+!data/processed/README.md
+!data/live/README.md
+
+# Manual adjustment folder:
+# keep documentation and the public ticker universe file only.
+data/manual_adjustments/**
+!data/manual_adjustments/.gitkeep
+!data/manual_adjustments/README.md
+!data/manual_adjustments/bist100_sirketler.xlsx
+
+# Allow the ticker universe file if it is stored directly under data/
+!data/bist100_sirketler.xlsx
+
+# ------------------------------------------------------------
+# Generated model artifacts
+# Use Git LFS or GitHub Releases only when intentionally publishing.
+# ------------------------------------------------------------
+models/**
+!models/.gitkeep
+!models/README.md
+
+*.joblib
+*.pkl
+*.pickle
+*.onnx
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.keras
+*.sav
+
+# ------------------------------------------------------------
+# Generated research and application outputs
+# Includes backtests, paper-trading plans and SQLite state.
+# ------------------------------------------------------------
+results/**
+!results/.gitkeep
+!results/README.md
+
+# ------------------------------------------------------------
+# Data science binary/table exports outside managed folders
+# Add a file explicitly with `git add -f` only after reviewing it.
+# ------------------------------------------------------------
+*.parquet
+*.feather
+*.arrow
+
+# Do not globally ignore CSV/XLSX because the project may contain
+# small public configuration files such as the BIST100 ticker list.
+# Large exports should live under data/ or results/, which are ignored.
+
+# ------------------------------------------------------------
+# Frontend/runtime files
+# ------------------------------------------------------------
+.streamlit/cache/
+.streamlit/static/generated/
+frontend/.streamlit/cache/
+
+# ------------------------------------------------------------
+# FastAPI/Uvicorn runtime artifacts
+# ------------------------------------------------------------
+*.pid
+uvicorn.pid
+
+# ------------------------------------------------------------
+# Local backups and archives
+# ------------------------------------------------------------
+*.zip
+*.7z
+*.rar
+*.tar
+*.tar.gz
+
+# ------------------------------------------------------------
+# Optional local screenshots containing account or portfolio data
+# Public, anonymized screenshots can be placed under docs/images/.
+# ------------------------------------------------------------
+screenshots/private/
+private_screenshots/
