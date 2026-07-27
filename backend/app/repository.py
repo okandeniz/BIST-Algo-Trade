@@ -14,6 +14,7 @@ from backend.app.utils import normalize_ticker
 
 
 BUY_COMMISSION_RATE = 0.002
+SELL_COMMISSION_RATE = 0.002
 
 
 class TradingRepository:
@@ -437,7 +438,16 @@ class TradingRepository:
     def sell(self, request: SellRequest) -> dict[str, Any]:
         ticker = normalize_ticker(request.ticker)
         gross_amount = request.quantity * request.price
-        net_proceeds = gross_amount - request.fees
+
+        # Satış komisyonu backend tarafında yeniden hesaplanır.
+        # Böylece istemciden farklı bir masraf gönderilse bile
+        # nakit ve gerçekleşen K/Z binde 2 ile kaydedilir.
+        commission_rate = SELL_COMMISSION_RATE
+        fees = round(
+            gross_amount * commission_rate,
+            2,
+        )
+        net_proceeds = gross_amount - fees
         now = self._now()
 
         with self.database.connection() as connection:
@@ -545,7 +555,7 @@ class TradingRepository:
                         ticker,
                         request.quantity,
                         request.price,
-                        request.fees,
+                        fees,
                         request.trade_date.isoformat(),
                         gross_amount,
                         net_proceeds,
@@ -564,7 +574,9 @@ class TradingRepository:
                     "side": "SELL",
                     "quantity": request.quantity,
                     "price": request.price,
-                    "fees": request.fees,
+                    "gross_amount": gross_amount,
+                    "fees": fees,
+                    "commission_rate": commission_rate,
                     "net_proceeds": net_proceeds,
                     "realized_pnl": realized_pnl,
                     "remaining_quantity": remaining_quantity,

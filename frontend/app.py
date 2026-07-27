@@ -840,89 +840,186 @@ def render_portfolio_workspace(
                 key=f"sell_ticker_{portfolio_name}",
             )
 
-            position_row = positions.loc[
+            selected_rows = positions.loc[
                 positions["Ticker"].eq(
                     sell_ticker
                 )
-            ].iloc[0]
+            ]
 
-            max_quantity = int(
-                position_row["Quantity"]
-            )
-            latest_price = float(
-                position_row["Latest_Price_TL"]
-            )
+            if selected_rows.empty:
+                st.error(
+                    "Seçilen hisseye ait açık pozisyon bulunamadı."
+                )
+            else:
+                position_row = selected_rows.iloc[0]
+                max_quantity = int(
+                    position_row["Quantity"]
+                )
+                latest_price = float(
+                    position_row["Latest_Price_TL"]
+                )
 
-            with st.form(
-                f"sell_form_{portfolio_name}_{sell_ticker}"
-            ):
+                quantity_key = (
+                    f"sell_quantity_"
+                    f"{portfolio_name}_{sell_ticker}"
+                )
+                price_key = (
+                    f"sell_price_"
+                    f"{portfolio_name}_{sell_ticker}"
+                )
+                date_key = (
+                    f"sell_date_"
+                    f"{portfolio_name}_{sell_ticker}"
+                )
+                note_key = (
+                    f"sell_note_"
+                    f"{portfolio_name}_{sell_ticker}"
+                )
+
+                # Her ticker farklı bir widget durumu kullanır.
+                # Bir hissenin lotu diğer hisseye taşınmaz.
+                saved_quantity = st.session_state.get(
+                    quantity_key
+                )
+
+                if (
+                    saved_quantity is None
+                    or int(saved_quantity) < 1
+                    or int(saved_quantity) > max_quantity
+                ):
+                    st.session_state[
+                        quantity_key
+                    ] = max_quantity
+
+                if price_key not in st.session_state:
+                    st.session_state[
+                        price_key
+                    ] = latest_price
+
                 s1, s2, s3 = st.columns(3)
+
                 sell_quantity = s1.number_input(
                     "Satış lotu",
                     min_value=1,
                     max_value=max_quantity,
-                    value=max_quantity,
                     step=1,
+                    key=quantity_key,
+                    help=(
+                        "Varsayılan değer seçilen hissenin "
+                        "açık pozisyondaki toplam lotudur. "
+                        "Kısmi satış için azaltabilirsiniz."
+                    ),
                 )
+
                 sell_price = s2.number_input(
                     "Satış fiyatı (TL)",
                     min_value=0.01,
-                    value=latest_price,
                     step=0.01,
                     format="%.4f",
+                    key=price_key,
                 )
-                sell_fees = s3.number_input(
-                    "Toplam masraf (TL)",
-                    min_value=0.0,
-                    value=0.0,
-                    step=0.01,
-                    format="%.2f",
+
+                gross_sale_amount = (
+                    int(sell_quantity)
+                    * float(sell_price)
+                )
+                sell_fees = round(
+                    gross_sale_amount * 0.002,
+                    2,
+                )
+                net_sale_proceeds = (
+                    gross_sale_amount - sell_fees
+                )
+
+                s3.metric(
+                    "Toplam masraf — binde 2",
+                    format_tl(sell_fees),
+                )
+
+                st.caption(
+                    f"Açık pozisyon: {max_quantity:,} lot · "
+                    f"Satış tutarı: "
+                    f"{format_tl(gross_sale_amount)} · "
+                    f"Komisyon: {format_tl(sell_fees)} · "
+                    f"Net nakit girişi: "
+                    f"{format_tl(net_sale_proceeds)}"
                 )
 
                 s4, s5 = st.columns(2)
+
                 sell_date = s4.date_input(
                     "Satış tarihi",
                     value=date.today(),
+                    key=date_key,
                 )
+
                 sell_note = s5.text_input(
                     "Satış notu",
                     value="",
+                    key=note_key,
                 )
 
-                sell_submit = st.form_submit_button(
+                sell_submit = st.button(
                     "Satışı kaydet",
                     type="primary",
                     use_container_width=True,
+                    key=(
+                        f"sell_submit_"
+                        f"{portfolio_name}_{sell_ticker}"
+                    ),
                 )
 
-            if sell_submit:
-                try:
-                    result = client.post(
-                        "/api/portfolio/sell",
-                        {
-                            "portfolio_name": (
-                                portfolio_name
-                            ),
-                            "ticker": sell_ticker,
-                            "quantity": int(
-                                sell_quantity
-                            ),
-                            "price": float(sell_price),
-                            "trade_date": (
-                                sell_date.isoformat()
-                            ),
-                            "fees": float(sell_fees),
-                            "note": sell_note or None,
-                        },
-                    )
-                    st.success(
-                        f"{result['ticker']} satışı kaydedildi. "
-                        f"Gerçekleşen K/Z: "
-                        f"{format_tl(result['realized_pnl'])}"
-                    )
-                    st.rerun()
-                except Exception as error:
-                    show_error(error)
+                if sell_submit:
+                    try:
+                        result = client.post(
+                            "/api/portfolio/sell",
+                            {
+                                "portfolio_name": (
+                                    portfolio_name
+                                ),
+                                "ticker": sell_ticker,
+                                "quantity": int(
+                                    sell_quantity
+                                ),
+                                "price": float(
+                                    sell_price
+                                ),
+                                "trade_date": (
+                                    sell_date.isoformat()
+                                ),
+                                "fees": float(
+                                    sell_fees
+                                ),
+                                "note": (
+                                    sell_note or None
+                                ),
+                            },
+                        )
+
+                        st.success(
+                            f"{result['ticker']} satışı "
+                            f"kaydedildi. Komisyon: "
+                            f"{format_tl(result['fees'])} · "
+                            f"Gerçekleşen K/Z: "
+                            f"{format_tl(result['realized_pnl'])}"
+                        )
+
+                        st.session_state.pop(
+                            quantity_key,
+                            None,
+                        )
+                        st.session_state.pop(
+                            price_key,
+                            None,
+                        )
+                        st.session_state.pop(
+                            note_key,
+                            None,
+                        )
+                        st.rerun()
+
+                    except Exception as error:
+                        show_error(error)
 
     st.markdown("#### İşlem geçmişi")
     if transactions.empty:
