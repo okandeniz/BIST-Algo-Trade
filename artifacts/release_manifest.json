@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "release_id": "baseline-robot-v1",
+  "promoted_at": "2026-09-16",
+  "primary_strategy": "Baseline_Robot",
+  "description": "Promoted Baseline Robot and locked challenger artifacts used by the application.",
+  "artifacts": {
+    "baseline.periods": "results/final_strategy_vs_bist100_periods.csv",
+    "baseline.active_metrics": "results/final_strategy_vs_bist100_active_metrics.csv",
+    "baseline.strategy_equity": "results/final_strategy_equity.parquet",
+    "baseline.benchmark_gross_equity": "results/bist100_gross_benchmark_equity.parquet",
+    "baseline.benchmark_net_equity": "results/bist100_net_benchmark_equity.parquet",
+    "baseline.yearly": "results/final_strategy_vs_bist100_yearly.csv",
+    "baseline.monthly_summary": "results/final_strategy_vs_bist100_monthly_summary.csv",
+    "walk_forward.metadata": "results/ml/walk_forward/walk_forward_metadata.json",
+    "walk_forward.metrics": "results/ml/walk_forward/walk_forward_comparison_metrics.csv",
+    "walk_forward.active_metrics": "results/ml/walk_forward/walk_forward_active_metrics.csv",
+    "walk_forward.equity": "results/ml/walk_forward/walk_forward_equity.parquet",
+    "walk_forward.yearly": "results/ml/walk_forward/walk_forward_yearly.csv",
+    "walk_forward.training_log": "results/ml/walk_forward/walk_forward_training_log.csv",
+    "research.stock_prices": "data/processed/bist100_robot_clean.parquet",
+    "research.market_prices": "data/processed/xu100_robot_clean.parquet",
+    "challenger.decision": "models/alternative_target_ml_decision.json",
+    "challenger.acceptance": "results/ml/alternative_targets_validation_acceptance.csv",
+    "challenger.model": "models/alternative_target_ml_model.joblib"
+  }
+}

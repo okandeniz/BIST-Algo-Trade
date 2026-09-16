@@ -27,6 +27,7 @@ from src.paper_trading import (
     record_sell,
     save_paper_state,
 )
+from src.release_manifest import ReleaseManifest
 
 
 @dataclass(frozen=True)
@@ -57,42 +58,14 @@ class DualDailyPlan:
 
 def load_challenger_deployment(
     project_root: str | Path,
+    manifest_path: str | Path | None = None,
 ) -> tuple[ChallengerDeployment, Any]:
     """Load the locked challenger decision, threshold and trained model."""
     root = Path(project_root)
-
-    decision_path = (
-        root
-        / "models"
-        / "alternative_target_ml_decision.json"
-    )
-    acceptance_path = (
-        root
-        / "results"
-        / "ml"
-        / "alternative_targets_validation_acceptance.csv"
-    )
-    model_path = (
-        root
-        / "models"
-        / "alternative_target_ml_model.joblib"
-    )
-
-    missing_paths = [
-        path
-        for path in (
-            decision_path,
-            acceptance_path,
-            model_path,
-        )
-        if not path.exists()
-    ]
-
-    if missing_paths:
-        raise FileNotFoundError(
-            "Challenger deployment için eksik dosyalar: "
-            + ", ".join(str(path) for path in missing_paths)
-        )
+    release = ReleaseManifest(root, manifest_path)
+    decision_path = release.resolve("challenger.decision")
+    acceptance_path = release.resolve("challenger.acceptance")
+    model_path = release.resolve("challenger.model")
 
     with decision_path.open(
         "r",

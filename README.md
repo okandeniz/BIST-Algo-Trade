@@ -128,7 +128,7 @@ Mevcut final strateji ayarları:
 
 ```text
 Başlangıç sermayesi         : Kullanıcı tarafından belirlenir
-Maksimum açık pozisyon      : 8
+Maksimum açık pozisyon      : 6
 İşlem başına risk           : %0,75
 Komisyon                    : Binde 2
 Kayma                       : Binde 2
@@ -137,6 +137,10 @@ Trailing stop               : 2,5 ATR
 Trailing aktivasyonu        : %6 kâr
 Fiyat tabanlı çıkış         : Önceki LOW10 seviyesi
 ```
+
+Uygulamanın aktif değerleri `src/presets.py`, portföy kimlikleri ve kullanıcıya
+açık çalışma ayarları ise `src/product_config.py` tarafından merkezi olarak
+yönetilir.
 
 Sinyaller gün sonu verisiyle oluşur. Alış ve kapanış bazlı çıkışlar bir sonraki uygun açılış fiyatından uygulanır. Intraday stop veya gap durumları ayrıca ele alınır.
 
@@ -262,7 +266,9 @@ BIST-Algo-Trade/
 ├── frontend/
 │   ├── app.py
 │   ├── api_client.py
-│   └── formatters.py
+│   ├── setup_guide.py
+│   ├── ui_helpers.py
+│   └── views/
 │
 ├── src/
 │   ├── data_loader.py
@@ -272,6 +278,7 @@ BIST-Algo-Trade/
 │   ├── backtest.py
 │   ├── metrics.py
 │   ├── presets.py
+│   ├── product_config.py
 │   ├── paper_trading.py
 │   ├── ml_dataset.py
 │   ├── ml_training.py
@@ -281,16 +288,10 @@ BIST-Algo-Trade/
 │   └── ...
 │
 ├── notebooks/
-│   ├── 01_data_collection_robot.ipynb
-│   ├── 02_data_quality_robot.ipynb
-│   ├── 03_baseline_strategy_robot.ipynb
-│   ├── 04_parameter_analysis_robot.ipynb
-│   ├── 05_exit_parameter_analysis_robot.ipynb
-│   ├── 06_robustness_analysis_robot.ipynb
-│   ├── 07_portfolio_risk_analysis_robot.ipynb
-│   ├── 08_daily_signal_paper_trading_robot.ipynb
-│   ├── 15_walk_forward_ml_comparison_robot.ipynb
-│   └── 16_ml_v2_multitask_ranking_robot.ipynb
+│   ├── README.md
+│   ├── active/       # Tekrar üretilebilir ana raporlar
+│   ├── labs/         # Aktif challenger deneyleri
+│   └── archive/      # Araştırma geçmişi
 │
 ├── data/
 │   ├── raw/
@@ -299,10 +300,12 @@ BIST-Algo-Trade/
 │   └── manual_adjustments/
 │
 ├── models/
+├── artifacts/
+│   └── release_manifest.json
 ├── results/
 ├── requirements.txt
-├── requirements_app.txt
-├── .env.example
+├── run_app.ps1        # Backend + arayüz için tek komut
+├── .env.example      # İsteğe bağlı kişisel ayarlar
 └── README.md
 ```
 
@@ -337,38 +340,39 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```powershell
 python -m pip install --upgrade pip
 pip install -r requirements.txt
-pip install -r requirements_app.txt
 ```
 
-### 4. Ortam değişkenlerini oluştur
+### 4. İsteğe bağlı ortam ayarları
+
+Uygulama varsayılan ayarlarla `.env` olmadan çalışır. Veritabanı,
+proje veya manifest konumunu değiştirmek gerekiyorsa:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-`.env` dosyasını kişisel ayarlarına göre düzenle. `.env` dosyası GitHub’a gönderilmemelidir.
+`.env` dosyası uygulama başlarken otomatik yüklenir ve GitHub’a
+gönderilmemelidir.
 
 ---
 
 ## Araştırma notebooklarının çalıştırılması
 
-Notebooklar genel olarak numara sırasıyla çalıştırılmalıdır.
+Günlük kullanım için notebook çalıştırılması gerekmez. Sinyal yenileme ve
+paper-trading işlemleri Streamlit arayüzünden yapılır.
 
-Temel araştırma akışı:
+Ana araştırma raporlarını yeniden üretmek için sadeleştirilmiş akış:
 
 ```text
-01 → Veri toplama
-02 → Veri kalite kontrolü
-03 → Baseline strateji
-04 → Sinyal parametre analizi
-05 → Çıkış parametre analizi
-06 → Robustness analizi
-07 → Portföy risk analizi
-08 → Günlük sinyal ve paper-trading
-...
-15 → Walk-forward ML karşılaştırması
-16 → ML V2 multi-task deneyi
+notebooks/active/01 → Veri toplama
+notebooks/active/02 → Veri kalite kontrolü
+notebooks/active/09 → Baseline ve BIST100 raporu
+notebooks/active/15 → Walk-forward challenger karşılaştırması
 ```
+
+Yeni deneyler `notebooks/labs/`, eski parametre çalışmaları ve kullanım dışı
+paper-trading notebookları `notebooks/archive/` altında korunur. Ayrıntılı
+sınıflandırma için `notebooks/README.md` dosyasına bakın.
 
 Araştırma ve canlı veri dosyaları ayrıdır:
 
@@ -379,42 +383,54 @@ data/live/       → Günlük FastAPI sinyal yenileme verisi
 
 FastAPI’nin günlük veri yenilemesi `data/processed` dosyalarının üzerine yazmamalıdır.
 
+### Promote edilmiş artifact'ler
+
+Çalışan uygulama notebook adlarına veya dağınık sonuç dosyalarına doğrudan bağlı
+değildir. Okuyacağı backtest, walk-forward, araştırma verisi ve challenger model
+dosyaları `artifacts/release_manifest.json` içinde mantıksal anahtarlarla
+sürümlenir. Yeni bir deney ancak manifest güncellendiğinde uygulamaya alınır.
+
+Artifact dosyalarının kendisi yerel `results/`, `data/` ve `models/`
+klasörlerinde kalır; manifest Git'te tutulabilir.
+
 ---
 
 ## FastAPI ve Streamlit uygulaması
 
-### FastAPI
+Günlük kullanımda tek terminal ve tek komut yeterlidir:
 
 ```powershell
-python -m uvicorn backend.app.main:app `
-    --reload `
-    --host 127.0.0.1 `
-    --port 8000
+.\run_app.ps1
+```
+
+Betik backend'i başlatır, hazır olmasını bekler ve Streamlit arayüzünü
+açar. Arayüz kapatıldığında betiğin başlattığı backend de kapatılır.
+Mevcut bir sağlıklı backend varsa yeniden başlatmak yerine onu kullanır.
+Eksik ticker, veri veya artifact varsa arayüz ilk açılışta "Başlangıç
+kontrolü" ekranını gösterir ve tamamlanması gereken adımı belirtir.
+
+Tarayıcı açmadan çalıştırmak için:
+
+```powershell
+.\run_app.ps1 -Headless
 ```
 
 Adresler:
 
 ```text
+Dashboard  : http://127.0.0.1:8501
 API health : http://127.0.0.1:8000/health
 Swagger    : http://127.0.0.1:8000/docs
 ```
 
-### Streamlit
+### Geliştirici modu
 
-İkinci terminalde:
+Backend ve arayüzü ayrı ayrı izlemek gerektiğinde mevcut geliştirici
+betikleri iki terminalde kullanılabilir:
 
 ```powershell
-$env:API_URL = "http://127.0.0.1:8000"
-
-python -m streamlit run frontend/app.py `
-    --server.address 127.0.0.1 `
-    --server.port 8501
-```
-
-Dashboard:
-
-```text
-http://127.0.0.1:8501
+.\run_backend.ps1
+.\run_frontend.ps1
 ```
 
 ---
@@ -586,7 +602,7 @@ models/*.pkl
 - Kaynak kodları
 - Notebooklar
 - `requirements.txt`
-- `requirements_app.txt`
+- `run_app.ps1`
 - `.env.example`
 - BIST100 ticker listesi
 - Veri açıklamaları

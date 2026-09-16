@@ -2,53 +2,36 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 import json
 import pandas as pd
 
 from backend.app.utils import dataframe_records
+from src.release_manifest import ReleaseManifest
 
 
 class WalkForwardService:
     def __init__(
         self,
-        results_directory: str | Path,
+        release_manifest: ReleaseManifest,
     ):
-        self.results_directory = Path(
-            results_directory
-        )
-
-    def _path(self, filename: str) -> Path:
-        path = self.results_directory / filename
-
-        if not path.exists():
-            raise FileNotFoundError(
-                "Walk-forward sonucu bulunamadı: "
-                f"{path}. Önce "
-                "15_walk_forward_ml_comparison_robot.ipynb "
-                "notebook'unu çalıştır."
-            )
-
-        return path
+        self.release_manifest = release_manifest
 
     def summary(self) -> dict[str, Any]:
         metadata = json.loads(
-            self._path(
-                "walk_forward_metadata.json"
+            self.release_manifest.resolve(
+                "walk_forward.metadata"
             ).read_text(
                 encoding="utf-8"
             )
         )
         metrics = pd.read_csv(
-            self._path(
-                "walk_forward_comparison_metrics.csv"
-            )
+            self.release_manifest.resolve("walk_forward.metrics")
         )
         active = pd.read_csv(
-            self._path(
-                "walk_forward_active_metrics.csv"
+            self.release_manifest.resolve(
+                "walk_forward.active_metrics"
             )
         )
 
@@ -60,24 +43,18 @@ class WalkForwardService:
 
     def equity(self) -> list[dict[str, Any]]:
         frame = pd.read_parquet(
-            self._path(
-                "walk_forward_equity.parquet"
-            )
+            self.release_manifest.resolve("walk_forward.equity")
         )
         return dataframe_records(frame)
 
     def yearly(self) -> list[dict[str, Any]]:
         frame = pd.read_csv(
-            self._path(
-                "walk_forward_yearly.csv"
-            )
+            self.release_manifest.resolve("walk_forward.yearly")
         )
         return dataframe_records(frame)
 
     def training_log(self) -> list[dict[str, Any]]:
         frame = pd.read_csv(
-            self._path(
-                "walk_forward_training_log.csv"
-            )
+            self.release_manifest.resolve("walk_forward.training_log")
         )
         return dataframe_records(frame)

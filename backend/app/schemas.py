@@ -13,10 +13,17 @@ from pydantic import (
     model_validator,
 )
 
+from src.product_config import (
+    BASELINE_PORTFOLIO,
+    ENHANCED_PORTFOLIO,
+    ML_PORTFOLIO,
+)
+
 
 PortfolioName = Literal[
-    "Baseline_Robot",
-    "ML_Challenger",
+    BASELINE_PORTFOLIO,
+    ENHANCED_PORTFOLIO,
+    ML_PORTFOLIO,
 ]
 
 

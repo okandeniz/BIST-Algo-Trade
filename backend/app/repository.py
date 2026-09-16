@@ -11,10 +11,10 @@ import pandas as pd
 from backend.app.database import Database
 from backend.app.schemas import BuyRequest, SellRequest
 from backend.app.utils import normalize_ticker
+from src.presets import FINAL_PORTFOLIO_CONFIG
 
 
-BUY_COMMISSION_RATE = 0.002
-SELL_COMMISSION_RATE = 0.002
+COMMISSION_RATE = FINAL_PORTFOLIO_CONFIG.commission_rate
 
 
 class TradingRepository:
@@ -255,7 +255,7 @@ class TradingRepository:
 
         # Commission is recalculated in the backend so the persisted
         # transaction always uses the fixed 0.2% rate.
-        commission_rate = BUY_COMMISSION_RATE
+        commission_rate = COMMISSION_RATE
         fees = round(
             gross_amount * commission_rate,
             2,
@@ -442,7 +442,7 @@ class TradingRepository:
         # Satış komisyonu backend tarafında yeniden hesaplanır.
         # Böylece istemciden farklı bir masraf gönderilse bile
         # nakit ve gerçekleşen K/Z binde 2 ile kaydedilir.
-        commission_rate = SELL_COMMISSION_RATE
+        commission_rate = COMMISSION_RATE
         fees = round(
             gross_amount * commission_rate,
             2,

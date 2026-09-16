@@ -1,4 +1,4 @@
-"""Daily Baseline and ML Challenger signal generation and persistence."""
+"""Daily Baseline, RS126 Enhanced and ML signal generation."""
 
 from __future__ import annotations
 
@@ -12,6 +12,11 @@ import pandas as pd
 from backend.app.config import AppSettings
 from backend.app.repository import TradingRepository
 from backend.app.utils import dataframe_records
+from src.product_config import (
+    BASELINE_PORTFOLIO,
+    ML_PORTFOLIO,
+    PORTFOLIO_NAMES,
+)
 
 
 class SignalService:
@@ -157,6 +162,21 @@ class SignalService:
             "challenger_sells": self._read_csv(
                 directory / "challenger_sell_orders.csv"
             ),
+            "enhanced_summary": self._read_csv(
+                directory / "enhanced_summary.csv"
+            ),
+            "enhanced_buys": self._read_csv(
+                directory / "enhanced_buy_orders.csv"
+            ),
+            "enhanced_sells": self._read_csv(
+                directory / "enhanced_sell_orders.csv"
+            ),
+            "enhanced_holds": self._read_csv(
+                directory / "enhanced_hold_positions.csv"
+            ),
+            "enhanced_candidates": self._read_csv(
+                directory / "enhanced_ranked_candidates.csv"
+            ),
             "model_diagnostic": self._read_csv(
                 directory / "model_diagnostic.csv"
             ),
@@ -183,6 +203,15 @@ class SignalService:
             FINAL_STRATEGY_CONFIG,
         )
         from src.ml_dataset import add_meta_features
+        from src.daily_signal import create_daily_plan
+        from src.enhanced_baseline import (
+            PORTFOLIO_NAME as ENHANCED_PORTFOLIO_NAME,
+            RULE_DESCRIPTION as ENHANCED_RULE_DESCRIPTION,
+            RULE_NAME as ENHANCED_RULE_NAME,
+            attach_enhanced_diagnostics,
+            build_rs126_enhanced_prices,
+            save_rs126_enhanced_plan,
+        )
         from src.dual_paper import (
             assert_model_scores_available,
             build_challenger_prices,
@@ -291,13 +320,20 @@ class SignalService:
             include_reasons=True,
         )
 
+        enhanced_prices = build_rs126_enhanced_prices(
+            baseline_prices=baseline_prices,
+            market_features=market_features,
+            strategy_config=FINAL_STRATEGY_CONFIG,
+        )
+
         featured_prices = add_meta_features(
             scored_prices=baseline_prices,
             market_features=market_features,
         )
 
         deployment, model = load_challenger_deployment(
-            self.settings.project_root
+            self.settings.project_root,
+            manifest_path=self.settings.release_manifest_path,
         )
 
         signal_date = choose_model_ready_signal_date(
@@ -327,10 +363,13 @@ class SignalService:
         assert_model_scores_available(diagnostic)
 
         baseline_state = self.repository.as_paper_state(
-            "Baseline_Robot"
+            BASELINE_PORTFOLIO
+        )
+        enhanced_state = self.repository.as_paper_state(
+            ENHANCED_PORTFOLIO_NAME
         )
         challenger_state = self.repository.as_paper_state(
-            "ML_Challenger"
+            ML_PORTFOLIO
         )
 
         dual_plan = create_dual_daily_plan(
@@ -344,11 +383,30 @@ class SignalService:
             minimum_coverage_ratio=0.60,
         )
 
+        enhanced_plan = create_daily_plan(
+            scored_prices=enhanced_prices,
+            state=enhanced_state,
+            strategy_config=FINAL_STRATEGY_CONFIG,
+            portfolio_config=FINAL_PORTFOLIO_CONFIG,
+            signal_date=signal_date,
+            minimum_coverage_ratio=0.60,
+        )
+        enhanced_plan = attach_enhanced_diagnostics(
+            plan=enhanced_plan,
+            enhanced_prices=enhanced_prices,
+        )
+
         paths = save_dual_plans(
             dual_plan=dual_plan,
             output_root=self.settings.daily_plans_dir,
         )
         plan_directory = Path(paths["summary"]).parent
+
+        save_rs126_enhanced_plan(
+            plan=enhanced_plan,
+            plan_directory=plan_directory,
+        )
+
         diagnostic.to_csv(
             plan_directory / "model_diagnostic.csv",
             index=False,
@@ -362,10 +420,7 @@ class SignalService:
             .drop_duplicates("Ticker", keep="last")
         )
 
-        for portfolio_name in (
-            "Baseline_Robot",
-            "ML_Challenger",
-        ):
+        for portfolio_name in PORTFOLIO_NAMES:
             self.repository.update_marks(
                 portfolio_name,
                 marks,
@@ -394,6 +449,26 @@ class SignalService:
                 self.settings.live_market_path
             ),
             "research_files_preserved": True,
+            "enhanced_portfolio_name": (
+                ENHANCED_PORTFOLIO_NAME
+            ),
+            "enhanced_rule_name": (
+                ENHANCED_RULE_NAME
+            ),
+            "enhanced_rule": (
+                ENHANCED_RULE_DESCRIPTION
+            ),
+            "enhanced_penalized_rows_on_signal_date": int(
+                enhanced_prices.loc[
+                    pd.to_datetime(
+                        enhanced_prices["Date"]
+                    ).eq(signal_date),
+                    "RS126_Penalty",
+                ].sum()
+            ),
+            "enhanced_buy_order_count": int(
+                len(enhanced_plan.buy_orders)
+            ),
             "model_target": deployment.target,
             "model_name": deployment.model_name,
             "filter_name": deployment.filter_name,

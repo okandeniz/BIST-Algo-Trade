@@ -2,40 +2,24 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 import pandas as pd
 
 from backend.app.utils import dataframe_records
+from src.release_manifest import ReleaseManifest
 
 
 class BacktestService:
-    def __init__(self, results_dir: str | Path):
-        self.results_dir = Path(results_dir)
-
-    def _path(self, filename: str) -> Path:
-        path = self.results_dir / filename
-
-        if not path.exists():
-            raise FileNotFoundError(
-                f"Backtest sonucu bulunamadı: {path}. "
-                "Önce 09_final_strategy_vs_bist100.ipynb "
-                "notebook'unu çalıştır."
-            )
-
-        return path
+    def __init__(self, release_manifest: ReleaseManifest):
+        self.release_manifest = release_manifest
 
     def summary(self) -> dict[str, Any]:
         periods = pd.read_csv(
-            self._path(
-                "final_strategy_vs_bist100_periods.csv"
-            )
+            self.release_manifest.resolve("baseline.periods")
         )
         active = pd.read_csv(
-            self._path(
-                "final_strategy_vs_bist100_active_metrics.csv"
-            )
+            self.release_manifest.resolve("baseline.active_metrics")
         )
 
         return {
@@ -45,22 +29,22 @@ class BacktestService:
 
     def equity(self) -> list[dict[str, Any]]:
         strategy = pd.read_parquet(
-            self._path("final_strategy_equity.parquet")
+            self.release_manifest.resolve("baseline.strategy_equity")
         )[["Date", "Equity"]].rename(
             columns={"Equity": "Final_Strategy"}
         )
 
         gross = pd.read_parquet(
-            self._path(
-                "bist100_gross_benchmark_equity.parquet"
+            self.release_manifest.resolve(
+                "baseline.benchmark_gross_equity"
             )
         )[["Date", "Equity"]].rename(
             columns={"Equity": "BIST100_Gross"}
         )
 
         net = pd.read_parquet(
-            self._path(
-                "bist100_net_benchmark_equity.parquet"
+            self.release_manifest.resolve(
+                "baseline.benchmark_net_equity"
             )
         )[["Date", "Equity"]].rename(
             columns={"Equity": "BIST100_Net"}
@@ -77,16 +61,12 @@ class BacktestService:
 
     def yearly(self) -> list[dict[str, Any]]:
         frame = pd.read_csv(
-            self._path(
-                "final_strategy_vs_bist100_yearly.csv"
-            )
+            self.release_manifest.resolve("baseline.yearly")
         )
         return dataframe_records(frame)
 
     def monthly_summary(self) -> list[dict[str, Any]]:
         frame = pd.read_csv(
-            self._path(
-                "final_strategy_vs_bist100_monthly_summary.csv"
-            )
+            self.release_manifest.resolve("baseline.monthly_summary")
         )
         return dataframe_records(frame)

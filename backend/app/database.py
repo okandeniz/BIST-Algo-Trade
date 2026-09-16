@@ -7,6 +7,8 @@ from pathlib import Path
 import sqlite3
 from typing import Iterator
 
+from src.product_config import PORTFOLIO_NAMES
+
 
 SCHEMA_SQL = """
 PRAGMA foreign_keys = ON;
@@ -100,10 +102,7 @@ class Database:
             # Internal value 1.0 stays compatible with old databases whose
             # original CHECK constraint required initial_capital > 0.
             # It is never shown while is_initialized = 0.
-            for portfolio_name in (
-                "Baseline_Robot",
-                "ML_Challenger",
-            ):
+            for portfolio_name in PORTFOLIO_NAMES:
                 connection.execute(
                     """
                     INSERT OR IGNORE INTO portfolios (

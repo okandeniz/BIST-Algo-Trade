@@ -7,6 +7,12 @@ from functools import lru_cache
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+
+DEFAULT_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+load_dotenv(DEFAULT_PROJECT_ROOT / ".env", override=False)
+
 
 def _default_project_root() -> Path:
     configured = os.getenv("PROJECT_ROOT")
@@ -14,8 +20,7 @@ def _default_project_root() -> Path:
     if configured:
         return Path(configured).expanduser().resolve()
 
-    # backend/app/config.py -> project root is parents[2]
-    return Path(__file__).resolve().parents[2]
+    return DEFAULT_PROJECT_ROOT
 
 
 @dataclass(frozen=True)
@@ -26,9 +31,9 @@ class AppSettings:
     live_stock_path: Path
     live_market_path: Path
     ticker_file: Path
-    backtest_results_dir: Path
     daily_plans_dir: Path
     app_results_dir: Path
+    release_manifest_path: Path
     signal_lookback_days: int
     cors_origins: tuple[str, ...]
 
@@ -88,7 +93,6 @@ def get_settings() -> AppSettings:
             / "raw"
             / "bist100_sirketler.xlsx"
         ),
-        backtest_results_dir=project_root / "results",
         daily_plans_dir=(
             project_root
             / "results"
@@ -101,6 +105,16 @@ def get_settings() -> AppSettings:
             / "results"
             / "app"
         ),
+        release_manifest_path=Path(
+            os.getenv(
+                "RELEASE_MANIFEST_PATH",
+                str(
+                    project_root
+                    / "artifacts"
+                    / "release_manifest.json"
+                ),
+            )
+        ).expanduser().resolve(),
         signal_lookback_days=int(
             os.getenv("SIGNAL_LOOKBACK_DAYS", "900")
         ),

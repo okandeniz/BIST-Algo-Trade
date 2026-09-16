@@ -16,6 +16,10 @@ from backend.app.services.backtest_service import (
 from backend.app.services.market_service import MarketService
 from backend.app.services.signal_service import SignalService
 from backend.app.services.walkforward_service import WalkForwardService
+from backend.app.services.enhanced_backtest_service import (
+    EnhancedBacktestService,
+)
+from src.release_manifest import ReleaseManifest
 
 
 @lru_cache(maxsize=1)
@@ -39,11 +43,17 @@ def get_market_service() -> MarketService:
 
 
 @lru_cache(maxsize=1)
-def get_backtest_service() -> BacktestService:
+def get_release_manifest() -> ReleaseManifest:
     settings = get_settings()
-    return BacktestService(
-        settings.backtest_results_dir
+    return ReleaseManifest(
+        project_root=settings.project_root,
+        manifest_path=settings.release_manifest_path,
     )
+
+
+@lru_cache(maxsize=1)
+def get_backtest_service() -> BacktestService:
+    return BacktestService(get_release_manifest())
 
 
 @lru_cache(maxsize=1)
@@ -57,11 +67,11 @@ def get_signal_service() -> SignalService:
 
 @lru_cache(maxsize=1)
 def get_walkforward_service() -> WalkForwardService:
-    settings = get_settings()
+    return WalkForwardService(get_release_manifest())
 
-    return WalkForwardService(
-        settings.project_root
-        / "results"
-        / "ml"
-        / "walk_forward"
+
+@lru_cache(maxsize=1)
+def get_enhanced_backtest_service() -> EnhancedBacktestService:
+    return EnhancedBacktestService(
+        release_manifest=get_release_manifest(),
     )

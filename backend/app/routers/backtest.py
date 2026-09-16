@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException
 from backend.app.dependencies import (
     get_backtest_service,
     get_walkforward_service,
+    get_enhanced_backtest_service,
 )
 
 
@@ -80,4 +81,32 @@ def walk_forward_yearly():
 def walk_forward_training_log():
     return _handle(
         get_walkforward_service().training_log
+    )
+
+
+@router.get("/enhanced/summary")
+def enhanced_summary():
+    return _handle(
+        get_enhanced_backtest_service().summary
+    )
+
+
+@router.get("/enhanced/equity")
+def enhanced_equity():
+    return _handle(
+        get_enhanced_backtest_service().equity
+    )
+
+
+@router.get("/enhanced/yearly")
+def enhanced_yearly():
+    return _handle(
+        get_enhanced_backtest_service().yearly
+    )
+
+
+@router.post("/enhanced/refresh")
+def enhanced_refresh():
+    return _handle(
+        get_enhanced_backtest_service().refresh
     )
