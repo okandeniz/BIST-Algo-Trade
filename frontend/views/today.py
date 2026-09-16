@@ -7,18 +7,48 @@ from typing import Any, Callable
 import streamlit as st
 
 from frontend.api_client import APIClient
-from src.product_config import PRIMARY_STRATEGY, STRATEGIES
+from src.product_config import (
+    PRIMARY_STRATEGY,
+    STRATEGIES,
+    strategy_label,
+    strategy_options,
+)
 from frontend.ui_helpers import format_date, show_error, to_frame
+
+
+ACTIVE_STRATEGY_SESSION_KEY = "active_strategy"
+ACTIVE_STRATEGY_WIDGET_KEY = "_today_active_strategy"
+
+
+def _store_active_strategy() -> None:
+    st.session_state[ACTIVE_STRATEGY_SESSION_KEY] = (
+        st.session_state[ACTIVE_STRATEGY_WIDGET_KEY]
+    )
+
+
+def _initialize_strategy_selection() -> None:
+    options = strategy_options()
+    active = st.session_state.get(
+        ACTIVE_STRATEGY_SESSION_KEY,
+        PRIMARY_STRATEGY,
+    )
+    if active not in options:
+        active = PRIMARY_STRATEGY
+        st.session_state[ACTIVE_STRATEGY_SESSION_KEY] = active
+
+    widget_value = st.session_state.get(ACTIVE_STRATEGY_WIDGET_KEY)
+    if widget_value not in options:
+        st.session_state[ACTIVE_STRATEGY_WIDGET_KEY] = active
 
 
 def render_today(
     client: APIClient,
     clear_cache: Callable[[], Any],
 ) -> None:
-    strategy = STRATEGIES[PRIMARY_STRATEGY]
     st.title("Bugün")
     st.caption(
-        "Günlük veri durumunu kontrol edin ve Baseline Robot aksiyonlarını tek ekrandan yönetin."
+        "Günlük veri durumunu kontrol edin ve seçtiğiniz stratejinin "
+        "aksiyonlarını tek ekrandan yönetin."
     )
 
     try:
@@ -57,7 +87,24 @@ def render_today(
         "Veri gecikmesi",
         f"{int(metadata.get('data_lag_calendar_days', 0))} gün",
     )
-    status_columns[3].metric("Aktif strateji", strategy.label)
+    _initialize_strategy_selection()
+    with status_columns[3]:
+        strategy_key = st.selectbox(
+            "Aktif strateji",
+            strategy_options(),
+            key=ACTIVE_STRATEGY_WIDGET_KEY,
+            format_func=strategy_label,
+            on_change=_store_active_strategy,
+        )
+    strategy = STRATEGIES[strategy_key]
+
+    if strategy_key != PRIMARY_STRATEGY:
+        st.warning(
+            f"{strategy.label} deneysel bir challenger stratejisidir. "
+            "Gerçek işlem kararından önce Araştırma sonuçlarını kontrol edin."
+        )
+    else:
+        st.caption(strategy.description)
 
     if metadata and not metadata.get("trade_ready", True):
         st.warning(
@@ -108,7 +155,8 @@ def render_today(
             )
 
     st.info(
-        "İşlem kaydı oluşturmak için Portföy sayfasını kullanın. RS126 ve ML sonuçları Araştırma sayfasında karşılaştırma amacıyla tutulur."
+        "İşlem kaydı oluşturmak için Portföy sayfasını kullanın. "
+        "Stratejilerin performans karşılaştırması Araştırma sayfasındadır."
     )
 
     with st.expander("Plan özeti"):
